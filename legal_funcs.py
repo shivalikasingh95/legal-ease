@@ -1,4 +1,4 @@
-import os
+import os, cohere
 from langchain.embeddings.cohere import CohereEmbeddings
 from langchain.llms import Cohere
 from langchain.prompts import PromptTemplate
@@ -11,8 +11,16 @@ QDRANT_HOST = os.environ.get('QDRANT_HOST')
 QDRANT_API_KEY = os.environ.get('QDRANT_API_KEY')
 COHERE_API_KEY = os.environ.get('COHERE_API_KEY')
 
-def dummy_fn(document):
-    return document
+def summarize(document):
+    summary_response = cohere.Client(COHERE_API_KEY).summarize( 
+                text=document,
+                length='long',
+                format='bullets',
+                model='summarize-xlarge',
+                extractiveness='medium',
+                temperature=0.9,
+            )
+    return summary_response.summary
 
 def question_answer(context, question):
     texts = [context[k:k+256] for k in range(0, len(context.split()), 256)]
