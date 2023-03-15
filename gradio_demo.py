@@ -2,12 +2,12 @@ import gradio as gr
 import legal_funcs
 
 qa_demo = gr.Interface( 
-              title = "Legal-Ease",
-              description="<html><img src='flc_design4.png', alt='Legal-ease logo', width=100, height=100><br>For all your legalese...</html>",
+              title = "<html><center><img src='file/flc_design4.png', alt='Legal-ease logo', width=300, height=300 /></center><br></html> For all your legalese ...",
+              description="<html><center>Copy-paste the contents of your document, and post your question about it. It's that easy!</center></html>",
               fn=legal_funcs.question_answer, 
               inputs=[
-                     gr.Text(label= "Context", lines=20), 
-                     gr.Text(label= "Question")
+                     gr.Text(label= "Copy your document here", lines=20), 
+                     gr.Text(label= "Ask a question")
                     ], 
               outputs=[
                         gr.Text(label='Answer')
@@ -15,9 +15,9 @@ qa_demo = gr.Interface(
             )
 
 summarize_demo = gr.Interface(
-                    title = "Legal-Ease",
-                    description="<html><img src='flc_design4.png', alt='Legal-ease logo', width=100, height=100><br>For all your legalese...</html>",
-                    fn=legal_funcs.dummy_fn,
+                    title = "<html><center><img src='file/flc_design4.png', alt='Legal-ease logo', width=300, height=300 /></center><br></html> For all your legalese ...",
+                    description="<html><center>Copy-paste the contents of your document and get a neat summary with just a click!</html>",
+                    fn=legal_funcs.summarize,
                     inputs=[gr.Text(label='Document', lines=30)],
                     outputs=[gr.Text(label = "Summary", lines=30)]
                 )
