@@ -1,0 +1,6 @@
+cohere
+qdrant_client
+datasets
+langchain
+gradio
+black
