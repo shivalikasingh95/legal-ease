@@ -1,14 +1,16 @@
 import gradio as gr
 import random
 import time
-from legal_document_utils import summarize, question_answer
-from examples import (
-    GNU_LICENSE_DOC,
-    GNU_LICENSE_QUESTION,
+from app.legal_document_utils import summarize, question_answer
+from app.qdrant_cohere_utils import cross_lingual_document_search, translate_output
+from app.examples import (
+    GPL_LICENSE_DOC,
+    GPL_LICENSE_QUESTION,
     POKEMON_GO_TERMS_OF_SERVICE,
     POKEMON_GO_QUESTION,
 )
 
+max_search_results = 3
 
 def reset_chatbot():
     return gr.update(value="")
@@ -27,7 +29,7 @@ def legal_doc_qa_bot(input_document, history):
 
 with gr.Blocks() as demo:
     gr.HTML(
-        """<html><center><img src='file/flc_design4.png', alt='Legal-ease logo', width=150, height=150 /></center><br></html>"""
+        """<html><center><img src='file/logo/flc_design4.png', alt='Legal-ease logo', width=150, height=150 /></center><br></html>"""
     )
 
     qa_bot_state = gr.State(value=[])
@@ -39,7 +41,7 @@ with gr.Blocks() as demo:
                     input_document = gr.Text(label="Copy your document here", lines=10)
 
                 with gr.Column():
-                    chatbot = gr.Chatbot()
+                    chatbot = gr.Chatbot(label="Chat History")
                     input_question = gr.Text(label="Ask a question")
                     clear = gr.Button("Clear")
 
@@ -47,7 +49,7 @@ with gr.Blocks() as demo:
                 with gr.Accordion("Show example inputs I can load:", open=False):
                     gr.Examples(
                         [
-                            [GNU_LICENSE_DOC, GNU_LICENSE_QUESTION],
+                            [GPL_LICENSE_DOC, GPL_LICENSE_QUESTION],
                             [POKEMON_GO_TERMS_OF_SERVICE, POKEMON_GO_QUESTION],
                         ],
                         [input_document, input_question],
@@ -67,17 +69,19 @@ with gr.Blocks() as demo:
 
             with gr.Row():
                 with gr.Accordion("Advanced Settings:", open=False):
-                    # model = # summarize-xlarge or summarize-medium
+                    
                     summary_length = gr.Radio(
-                        ["short", "medium", "long"], label="Summary Length"
+                        ["short", "medium", "long"], label="Summary Length", value="long"
                     )
                     summary_format = gr.Radio(
-                        ["paragraph", "bullet"], label="Summary Format"
+                        ["paragraph", "bullets"], label="Summary Format", value="bullets"
                     )
                     extractiveness = gr.Radio(
                         ["low", "medium", "high"],
                         label="Extractiveness",
                         info="Controls how close to the original text the summary is.",
+                        visible=False,
+                        value="high",
                     )
                     temperature = gr.Slider(
                         minimum=0,
@@ -85,9 +89,64 @@ with gr.Blocks() as demo:
                         value=0.64,
                         step=0.1,
                         interactive=True,
+                        visible=False,
                         label="Temperature",
                         info="Controls the randomness of the output. Lower values tend to generate more “predictable” output, while higher values tend to generate more “creative” output.",
                     )
+            with gr.Row():
+                with gr.Accordion("Show example inputs I can load:", open=False):
+                    gr.Examples(
+                        [
+                            [GPL_LICENSE_DOC],
+                            [POKEMON_GO_TERMS_OF_SERVICE],
+                        ],
+                        [summary_input],
+                        [],
+                        None,
+                        cache_examples=False,
+                    )
+                    
+        with gr.TabItem("Document Search"):
+            
+            with gr.Row():
+                text_match = gr.CheckboxGroup(["Full Text Search"], label="find exact text in documents")
+                doc_choices = gr.CheckboxGroup(["contracts", "legislations", "caselaw", "terms of service"], label="Search through these documents", visible=False)
+            with gr.Row():
+                lang_choices = gr.CheckboxGroup(["English", "French", "Italian", "Dutch", "Polish", "Hungarian", "Norwegian"], label="Filter results based on language")                
+                
+            with gr.Row():
+                with gr.Column():
+                    user_query = gr.Text(label="Enter query here", placeholder="Search through all your documents")
+                    
+                    num_search_results = gr.Slider(1, max_search_results, visible=False, value=max_search_results, step=1, interactive=True, label="How many search results to show:")
+                                       
+                    with gr.Row():
+                        with gr.Column():
+                            query_match_out_1 = gr.Textbox(label=f"Search Result 1")
+                        
+                        with gr.Column():
+                            with gr.Accordion("Translate Result:", open=False):
+                                translate_1 = gr.Button(label="Translate", value="Translate")
+                                translate_res_1 = gr.Textbox(label=f"Translation Result 1")
+                                
+                    with gr.Row():
+                        with gr.Column():
+                            query_match_out_2 = gr.Textbox(label=f"Search Result 1")
+
+                        with gr.Column():
+                            with gr.Accordion("Translate Result:", open=False):
+                                translate_2 = gr.Button(label="Translate", value="Translate")
+                                translate_res_2 = gr.Textbox(label=f"Translation Result 3")
+                                
+                    with gr.Row():        
+                        with gr.Column():
+                            query_match_out_3 = gr.Textbox(label=f"Search Result 3")
+
+                        with gr.Column():
+                            with gr.Accordion("Translate Result:", open=False):
+                                translate_3 = gr.Button(label="Translate", value="Translate")
+                                translate_res_3 = gr.Textbox(label=f"Translation Result 3")
+                
 
     input_question.submit(
         user, [input_question, chatbot], [input_question, chatbot], queue=False
@@ -98,7 +157,30 @@ with gr.Blocks() as demo:
 
     # clear the chatbot Q&A history when this button is clicked by the user
     clear.click(lambda: None, None, chatbot, queue=False)
-
+        
+    user_query.change(cross_lingual_document_search, [user_query, num_search_results, lang_choices, doc_choices, text_match], [query_match_out_1, query_match_out_2, query_match_out_3], queue=False)
+    user_query.submit(cross_lingual_document_search, [user_query, num_search_results, lang_choices, doc_choices, text_match], [query_match_out_1, query_match_out_2, query_match_out_3], queue=False)
+    
+    
+    translate_1.click(
+        translate_output,
+        [query_match_out_1],
+        [translate_res_1],
+        queue=False,
+    )
+    translate_2.click(
+        translate_output,
+        [query_match_out_2],
+        [translate_res_2],
+        queue=False,
+    )
+    translate_3.click(
+        translate_output,
+        [query_match_out_3],
+        [translate_res_3],
+        queue=False,
+    )
+        
     generate_summary.click(
         summarize,
         [summary_input, summary_length, summary_format, extractiveness, temperature],

@@ -22,6 +22,7 @@ def summarize(
     extractiveness: str,
     temperature: float,
 ):
+    
     summary_response = cohere.Client(COHERE_API_KEY).summarize(
         text=document,
         length=summary_length,
