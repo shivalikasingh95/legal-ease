@@ -1,7 +1,7 @@
 import gradio as gr
 import random
 import time
-from app.legal_document_utils import summarize, question_answer
+from app.legal_document_utils import summarize, question_answer, load_gpl_license, load_pokemon_license
 from app.qdrant_cohere_utils import cross_lingual_document_search, translate_output
 from app.examples import (
     GPL_LICENSE_DOC,
@@ -50,17 +50,18 @@ with gr.Blocks() as demo:
 
             with gr.Row():
                 with gr.Accordion("Show example inputs I can load:", open=False):
-                    # example_1 = gr.Button("Load GPL License Document")
-                    gr.Examples(
-                        [
-                            [GPL_LICENSE_DOC, GPL_LICENSE_QUESTION],
-                            [POKEMON_GO_TERMS_OF_SERVICE, POKEMON_GO_QUESTION],
-                        ],
-                        [input_document, input_question],
-                        [],
-                        None,
-                        cache_examples=False,
-                    )
+                    example_1 = gr.Button("Load GPL License Document")
+                    example_2 = gr.Button("Load Pokemon Go Terms of Service")
+                    # gr.Examples(
+                    #     [
+                    #         [GPL_LICENSE_DOC, GPL_LICENSE_QUESTION],
+                    #         [POKEMON_GO_TERMS_OF_SERVICE, POKEMON_GO_QUESTION],
+                    #     ],
+                    #     [input_document, input_question],
+                    #     [],
+                    #     None,
+                    #     cache_examples=False,
+                    # )
 
         with gr.TabItem("Summarize"):
             gr.HTML("""<p style="text-align: center; font-weight: bold; color: maroon; font-size: 15px;">Legal Document Summarization</p>""")
@@ -73,6 +74,7 @@ with gr.Blocks() as demo:
 
                 with gr.Column():
                     summary_output = gr.Text(label="Summary", lines=10)
+                    invisible_comp = gr.Text(label="Dummy Component", visible=False)
 
             with gr.Row():
                 with gr.Accordion("Advanced Settings:", open=False):
@@ -100,18 +102,21 @@ with gr.Blocks() as demo:
                         label="Temperature",
                         info="Controls the randomness of the output. Lower values tend to generate more “predictable” output, while higher values tend to generate more “creative” output.",
                     )
+                    
             with gr.Row():
                 with gr.Accordion("Show example inputs I can load:", open=False):
-                    gr.Examples(
-                        [
-                            [GPL_LICENSE_DOC],
-                            [POKEMON_GO_TERMS_OF_SERVICE],
-                        ],
-                        [summary_input],
-                        [],
-                        None,
-                        cache_examples=False,
-                    )
+                    example_3 = gr.Button("Load GPL License Document")
+                    example_4 = gr.Button("Load Pokemon Go Terms of Service")
+                    # gr.Examples(
+                    #     [
+                    #         [GPL_LICENSE_DOC],
+                    #         [POKEMON_GO_TERMS_OF_SERVICE],
+                    #     ],
+                    #     [summary_input],
+                    #     [],
+                    #     None,
+                    #     cache_examples=False,
+                    # )
                     
         with gr.TabItem("Document Search"):
             gr.HTML("""<p style="text-align: center; font-weight: bold; color: maroon; font-size: 15px;">Legal Document Search</p>""")
@@ -169,6 +174,34 @@ with gr.Blocks() as demo:
 
     # reset the chatbot Q&A history when input document changes
     input_document.change(fn=reset_chatbot, inputs=[], outputs=chatbot)
+    
+    example_1.click(
+        load_gpl_license,
+        [],
+        [input_document, input_question],
+        queue=False,
+    )
+    
+    example_2.click(
+        load_pokemon_license,
+        [],
+        [input_document, input_question],
+        queue=False,
+    )
+    
+    example_3.click(
+        load_gpl_license,
+        [],
+        [summary_input, invisible_comp],
+        queue=False,
+    )
+    
+    example_4.click(
+        load_pokemon_license,
+        [],
+        [summary_input, invisible_comp],
+        queue=False,
+    )
     
     # generate summary corresponding to document submitted by the user.
     generate_summary.click(

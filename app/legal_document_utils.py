@@ -5,6 +5,7 @@ from langchain.prompts import PromptTemplate
 from langchain.vectorstores import Qdrant
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains.question_answering import load_qa_chain
+import pandas as pd
 
 # load environment variables
 QDRANT_HOST = os.environ.get("QDRANT_HOST")
@@ -69,3 +70,11 @@ def question_answer(input_document, history):
     answer = chain.run(input_documents=relevant_context, question=question)
     answer = answer.replace("\n", "").replace("Answer:", "")
     return answer
+
+def load_gpl_license():
+    df = pd.read_csv("app/examples.csv")
+    return df['doc'].iloc[0], df['question'].iloc[0]
+
+def load_pokemon_license():
+    df = pd.read_csv("app/examples.csv")
+    return df['doc'].iloc[1], df['question'].iloc[1]
