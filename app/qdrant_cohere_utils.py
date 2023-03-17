@@ -140,12 +140,12 @@ def translate_output(input_sentence, user_query):
     src_current_lang = src_detected_lang.results[0].language_name
     print("src_current_lang:", src_current_lang)
     
-    target_detected_lang = cohere_client.detect_language(texts=[user_query])
-    target_current_lang = target_detected_lang.results[0].language_name
+    # target_detected_lang = cohere_client.detect_language(texts=[user_query])
+    # target_current_lang = target_detected_lang.results[0].language_name
     
-    # target_current_lang = "English"
-    # if src_current_lang == "English":
-    #     return input_sentence
+    target_current_lang = "English"
+    if src_current_lang == "English":
+        return input_sentence
     
     prompt = f""""
     Translate this sentence from {src_detected_lang} to {target_current_lang}: '{input_sentence}'.
