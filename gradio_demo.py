@@ -29,13 +29,16 @@ def legal_doc_qa_bot(input_document, history):
 
 with gr.Blocks() as demo:
     gr.HTML(
-        """<html><center><img src='file/logo/flc_design4.png', alt='Legal-ease logo', width=150, height=150 /></center><br></html>"""
+        """<html><center><img src='file/logo/flc_design4.png', alt='Legal-ease logo', width=250, height=250 /></center><br></html>"""
     )
 
     qa_bot_state = gr.State(value=[])
 
     with gr.Tabs():
         with gr.TabItem("Q&A"):
+            gr.HTML("""<p style="text-align: center; font-weight: bold; color: maroon; font-size: 15px;">Legal Document Q&A</p>""")
+            gr.HTML("""<p style="text-align:center;">We know legal documents can be dense to comprehend and difficult to understand. Add your legal document below and we'll answer all your doubts and queries.</p>""")
+            
             with gr.Row():
                 with gr.Column():
                     input_document = gr.Text(label="Copy your document here", lines=10)
@@ -47,6 +50,7 @@ with gr.Blocks() as demo:
 
             with gr.Row():
                 with gr.Accordion("Show example inputs I can load:", open=False):
+                    # example_1 = gr.Button("Load GPL License Document")
                     gr.Examples(
                         [
                             [GPL_LICENSE_DOC, GPL_LICENSE_QUESTION],
@@ -59,6 +63,9 @@ with gr.Blocks() as demo:
                     )
 
         with gr.TabItem("Summarize"):
+            gr.HTML("""<p style="text-align: center; font-weight: bold; color: maroon; font-size: 15px;">Legal Document Summarization</p>""")
+            gr.HTML("""<p style="text-align:center;">Legal documents can be way too lengthy and sometimes all you want is a quick high-level summary. Enter your legal document below and we'll summarize it for you.</p>""")
+            
             with gr.Row():
                 with gr.Column():
                     summary_input = gr.Text(label="Document", lines=10)
@@ -107,6 +114,13 @@ with gr.Blocks() as demo:
                     )
                     
         with gr.TabItem("Document Search"):
+            gr.HTML("""<p style="text-align: center; font-weight: bold; color: maroon; font-size: 15px;">Legal Document Search</p>""")
+            gr.HTML("""<p style="text-align:center;">Search across a set of legal documents in any language or even a mix of languages. Query them using any one of over 100 supported languages.</p>""")
+            
+            gr.HTML("""<p style="text-align:center; font-style:italic;">To get you started, we have indexed a set of documents from eight European countries (Belgium, France, Hungary, Italy, Netherlands, Norway, Poland, UK) in seven languages, outlining legislation passed during the COVID-19 pandemic.</p>""")
+            
+#             gr.Markdown("""Search across a set of legal documents in any language or even a mix of languages. Query them using any one of over 100 supported languages.
+# To get you started, we have indexed a set of documents from eight European countries (Belgium, France, Hunary, Italy, Netherlands, Norway, Poland, UK) in seven languages, outlining legislation passed during the COVID-19 pandemic.""")
             
             with gr.Row():
                 text_match = gr.CheckboxGroup(["Full Text Search"], label="find exact text in documents")
@@ -125,66 +139,76 @@ with gr.Blocks() as demo:
                             query_match_out_1 = gr.Textbox(label=f"Search Result 1")
                         
                         with gr.Column():
-                            with gr.Accordion("Translate Result:", open=False):
+                            with gr.Accordion("Translate Search Result", open=False):
                                 translate_1 = gr.Button(label="Translate", value="Translate")
                                 translate_res_1 = gr.Textbox(label=f"Translation Result 1")
                                 
                     with gr.Row():
                         with gr.Column():
-                            query_match_out_2 = gr.Textbox(label=f"Search Result 1")
+                            query_match_out_2 = gr.Textbox(label=f"Search Result 2")
 
                         with gr.Column():
-                            with gr.Accordion("Translate Result:", open=False):
+                            with gr.Accordion("Translate Search Result", open=False):
                                 translate_2 = gr.Button(label="Translate", value="Translate")
-                                translate_res_2 = gr.Textbox(label=f"Translation Result 3")
+                                translate_res_2 = gr.Textbox(label=f"Translation Result 2")
                                 
                     with gr.Row():        
                         with gr.Column():
                             query_match_out_3 = gr.Textbox(label=f"Search Result 3")
 
                         with gr.Column():
-                            with gr.Accordion("Translate Result:", open=False):
+                            with gr.Accordion("Translate Search Result", open=False):
                                 translate_3 = gr.Button(label="Translate", value="Translate")
                                 translate_res_3 = gr.Textbox(label=f"Translation Result 3")
                 
-
+    
+    # fetch answer for submitted question corresponding to input document
     input_question.submit(
         user, [input_question, chatbot], [input_question, chatbot], queue=False
     ).then(legal_doc_qa_bot, [input_document, chatbot], chatbot)
 
     # reset the chatbot Q&A history when input document changes
     input_document.change(fn=reset_chatbot, inputs=[], outputs=chatbot)
-
-    # clear the chatbot Q&A history when this button is clicked by the user
-    clear.click(lambda: None, None, chatbot, queue=False)
-        
-    user_query.change(cross_lingual_document_search, [user_query, num_search_results, lang_choices, doc_choices, text_match], [query_match_out_1, query_match_out_2, query_match_out_3], queue=False)
-    user_query.submit(cross_lingual_document_search, [user_query, num_search_results, lang_choices, doc_choices, text_match], [query_match_out_1, query_match_out_2, query_match_out_3], queue=False)
     
-    
-    translate_1.click(
-        translate_output,
-        [query_match_out_1],
-        [translate_res_1],
-        queue=False,
-    )
-    translate_2.click(
-        translate_output,
-        [query_match_out_2],
-        [translate_res_2],
-        queue=False,
-    )
-    translate_3.click(
-        translate_output,
-        [query_match_out_3],
-        [translate_res_3],
-        queue=False,
-    )
-        
+    # generate summary corresponding to document submitted by the user.
     generate_summary.click(
         summarize,
         [summary_input, summary_length, summary_format, extractiveness, temperature],
         [summary_output],
+        queue=False,
+    )
+
+    # clear the chatbot Q&A history when this button is clicked by the user
+    clear.click(lambda: None, None, chatbot, queue=False)
+    
+    # run search as user is typing the query
+    user_query.change(cross_lingual_document_search, [user_query, num_search_results, lang_choices, doc_choices, text_match], [query_match_out_1, query_match_out_2, query_match_out_3], queue=False)
+    
+    # run search if user submits query
+    user_query.submit(cross_lingual_document_search, [user_query, num_search_results, lang_choices, doc_choices, text_match], [query_match_out_1, query_match_out_2, query_match_out_3], queue=False)
+    
+    
+    # translate results corresponding to 1st search result obtained if user clicks 'Translate'
+    translate_1.click(
+        translate_output,
+        [query_match_out_1, user_query],
+        [translate_res_1],
+        queue=False,
+    )
+    
+    # translate results corresponding to 2nd search result obtained if user clicks 'Translate'
+    translate_2.click(
+        translate_output,
+        [query_match_out_2, user_query],
+        [translate_res_2],
+        queue=False,
+    )
+    
+    # translate results corresponding to 3rd search result obtained if user clicks 'Translate'
+    translate_3.click(
+        translate_output,
+        [query_match_out_3, user_query],
+        [translate_res_3],
         queue=False,
     )
 

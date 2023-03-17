@@ -122,10 +122,10 @@ def search_docs_for_query(
                     ),
                 )
             )
-    print("filters:", filters)
+    
     result = qdrant_client.search(
         collection_name=collection_name,
-        query_filter=models.Filter(must=filters),
+        query_filter=models.Filter(should=filters),
         search_params=models.SearchParams(hnsw_ef=128, exact=False),
         query_vector=query_embedding,
         limit=num_results,
@@ -133,15 +133,24 @@ def search_docs_for_query(
     return result
 
 
-def translate_output(input_sentence):
+def translate_output(input_sentence, user_query):
     response = cohere_client.tokenize(text=input_sentence)
-    detected_lang = cohere_client.detect_language(texts=[input_sentence])
-    current_lang = detected_lang.results[0].language_name
-
-    if current_lang == "English":
-        return input_sentence
+    
+    src_detected_lang = cohere_client.detect_language(texts=[input_sentence])
+    src_current_lang = src_detected_lang.results[0].language_name
+    print("src_current_lang:", src_current_lang)
+    
+    target_detected_lang = cohere_client.detect_language(texts=[user_query])
+    target_current_lang = target_detected_lang.results[0].language_name
+    
+    # target_current_lang = "English"
+    # if src_current_lang == "English":
+    #     return input_sentence
+    
     prompt = f""""
-    Translate this sentence from {current_lang} to English: '{input_sentence}'."
+    Translate this sentence from {src_detected_lang} to {target_current_lang}: '{input_sentence}'.
+    
+    Don't include the above prompt in the final translation. The final output should only include the translation of the input sentence.
     """
 
     response = cohere_client.generate(
@@ -153,6 +162,7 @@ def translate_output(input_sentence):
     )
 
     translation = response.generations[0].text
+    print("translation:",translation)
     return translation
 
 
