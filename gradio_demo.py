@@ -35,10 +35,7 @@ with gr.Blocks() as demo:
     qa_bot_state = gr.State(value=[])
 
     with gr.Tabs():
-        with gr.TabItem("Q&A"):
-            gr.HTML("""<p style="text-align: center; font-weight: bold; color: maroon; font-size: 15px;">Legal Document Q&A</p>""")
-            gr.HTML("""<p style="text-align:center;">We know legal documents can be dense to comprehend and difficult to understand. Add your legal document below and we'll answer all your doubts and queries.</p>""")
-            
+        with gr.TabItem("Q&A"):            
             with gr.Row():
                 with gr.Column():
                     input_document = gr.Text(label="Copy your document here", lines=10)
@@ -64,9 +61,6 @@ with gr.Blocks() as demo:
                     # )
 
         with gr.TabItem("Summarize"):
-            gr.HTML("""<p style="text-align: center; font-weight: bold; color: maroon; font-size: 15px;">Legal Document Summarization</p>""")
-            gr.HTML("""<p style="text-align:center;">Legal documents can be way too lengthy and sometimes all you want is a quick high-level summary. Enter your legal document below and we'll summarize it for you.</p>""")
-            
             with gr.Row():
                 with gr.Column():
                     summary_input = gr.Text(label="Document", lines=10)
@@ -119,10 +113,8 @@ with gr.Blocks() as demo:
                     # )
                     
         with gr.TabItem("Document Search"):
-            gr.HTML("""<p style="text-align: center; font-weight: bold; color: maroon; font-size: 15px;">Legal Document Search</p>""")
-            gr.HTML("""<p style="text-align:center;">Search across a set of legal documents in any language or even a mix of languages. Query them using any one of over 100 supported languages.</p>""")
-            
-            gr.HTML("""<p style="text-align:center; font-style:italic;">To get you started, we have indexed a set of documents from eight European countries (Belgium, France, Hungary, Italy, Netherlands, Norway, Poland, UK) in seven languages, outlining legislation passed during the COVID-19 pandemic.</p>""")
+            gr.HTML("""<p style="text-align:center;"><b>Search across a set of legal documents in any language or even a mix of languages. Query them using any one of over 100 supported languages.</p>""")            
+            gr.HTML("""<p style="text-align:center; font-style:italic;">Get started with a pre-indexed set of documents from eight European countries (Belgium, France, Hungary, Italy, Netherlands, Norway, Poland, UK) in seven languages, outlining legislation passed during the COVID-19 pandemic.</p>""")
             
 #             gr.Markdown("""Search across a set of legal documents in any language or even a mix of languages. Query them using any one of over 100 supported languages.
 # To get you started, we have indexed a set of documents from eight European countries (Belgium, France, Hunary, Italy, Netherlands, Norway, Poland, UK) in seven languages, outlining legislation passed during the COVID-19 pandemic.""")
