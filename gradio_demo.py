@@ -1,29 +1,26 @@
 import gradio as gr
-import random
-import time
-from app.legal_document_utils import summarize, question_answer, load_gpl_license, load_pokemon_license
-from app.qdrant_cohere_utils import cross_lingual_document_search, translate_output
-from app.examples import (
-    GPL_LICENSE_DOC,
-    GPL_LICENSE_QUESTION,
-    POKEMON_GO_TERMS_OF_SERVICE,
-    POKEMON_GO_QUESTION,
+from app.legal_document_utils import (
+    summarize,
+    question_answer,
+    load_gpl_license,
+    load_pokemon_license,
 )
+from app.document_search import cross_lingual_document_search, translate_search_result
 
 max_search_results = 3
+
 
 def reset_chatbot():
     return gr.update(value="")
 
 
-def user(input_question, history):
+def get_user_input(input_question, history):
     return "", history + [[input_question, None]]
 
 
 def legal_doc_qa_bot(input_document, history):
     bot_message = question_answer(input_document, history)
     history[-1][1] = bot_message
-    # time.sleep(1)
     return history
 
 
@@ -35,32 +32,33 @@ with gr.Blocks() as demo:
     qa_bot_state = gr.State(value=[])
 
     with gr.Tabs():
-        with gr.TabItem("Q&A"):            
+        with gr.TabItem("Q&A"):
+            gr.HTML(
+                """<p style="text-align:center;"><b>Legal documents can be difficult to comprehend and understand. Add a legal document below and ask any questions related to it.</p>"""
+            )
+
             with gr.Row():
                 with gr.Column():
                     input_document = gr.Text(label="Copy your document here", lines=10)
 
                 with gr.Column():
                     chatbot = gr.Chatbot(label="Chat History")
-                    input_question = gr.Text(label="Ask a question")
+                    input_question = gr.Text(
+                        label="Ask a question",
+                        placeholder="Type a question here and hit enter.",
+                    )
                     clear = gr.Button("Clear")
 
             with gr.Row():
                 with gr.Accordion("Show example inputs I can load:", open=False):
                     example_1 = gr.Button("Load GPL License Document")
                     example_2 = gr.Button("Load Pokemon Go Terms of Service")
-                    # gr.Examples(
-                    #     [
-                    #         [GPL_LICENSE_DOC, GPL_LICENSE_QUESTION],
-                    #         [POKEMON_GO_TERMS_OF_SERVICE, POKEMON_GO_QUESTION],
-                    #     ],
-                    #     [input_document, input_question],
-                    #     [],
-                    #     None,
-                    #     cache_examples=False,
-                    # )
 
         with gr.TabItem("Summarize"):
+            gr.HTML(
+                """<p style="text-align:center;"><b>Legal documents can be very lengthy. Add a legal document below and generate a quick summary for it.</p>"""
+            )
+
             with gr.Row():
                 with gr.Column():
                     summary_input = gr.Text(label="Document", lines=10)
@@ -72,12 +70,15 @@ with gr.Blocks() as demo:
 
             with gr.Row():
                 with gr.Accordion("Advanced Settings:", open=False):
-                    
                     summary_length = gr.Radio(
-                        ["short", "medium", "long"], label="Summary Length", value="long"
+                        ["short", "medium", "long"],
+                        label="Summary Length",
+                        value="long",
                     )
                     summary_format = gr.Radio(
-                        ["paragraph", "bullets"], label="Summary Format", value="bullets"
+                        ["paragraph", "bullets"],
+                        label="Summary Format",
+                        value="bullets",
                     )
                     extractiveness = gr.Radio(
                         ["low", "medium", "high"],
@@ -96,105 +97,136 @@ with gr.Blocks() as demo:
                         label="Temperature",
                         info="Controls the randomness of the output. Lower values tend to generate more “predictable” output, while higher values tend to generate more “creative” output.",
                     )
-                    
+
             with gr.Row():
                 with gr.Accordion("Show example inputs I can load:", open=False):
                     example_3 = gr.Button("Load GPL License Document")
                     example_4 = gr.Button("Load Pokemon Go Terms of Service")
-                    # gr.Examples(
-                    #     [
-                    #         [GPL_LICENSE_DOC],
-                    #         [POKEMON_GO_TERMS_OF_SERVICE],
-                    #     ],
-                    #     [summary_input],
-                    #     [],
-                    #     None,
-                    #     cache_examples=False,
-                    # )
-                    
+
         with gr.TabItem("Document Search"):
-            gr.HTML("""<p style="text-align:center;"><b>Search across a set of legal documents in any language or even a mix of languages. Query them using any one of over 100 supported languages.</p>""")            
-            gr.HTML("""<p style="text-align:center; font-style:italic;">Get started with a pre-indexed set of documents from eight European countries (Belgium, France, Hungary, Italy, Netherlands, Norway, Poland, UK) in seven languages, outlining legislation passed during the COVID-19 pandemic.</p>""")
-            
-#             gr.Markdown("""Search across a set of legal documents in any language or even a mix of languages. Query them using any one of over 100 supported languages.
-# To get you started, we have indexed a set of documents from eight European countries (Belgium, France, Hunary, Italy, Netherlands, Norway, Poland, UK) in seven languages, outlining legislation passed during the COVID-19 pandemic.""")
-            
+            gr.HTML(
+                """<p style="text-align:center;"><b>Search across a set of legal documents in any language or even a mix of languages. Query them using any one of over 100 supported languages.</p>"""
+            )
+            gr.HTML(
+                """<p style="text-align:center; font-style:italic;">Get started with a pre-indexed set of documents from eight European countries (Belgium, France, Hungary, Italy, Netherlands, Norway, Poland, UK) in seven languages, outlining legislation passed during the COVID-19 pandemic.</p>"""
+            )
+
             with gr.Row():
-                text_match = gr.CheckboxGroup(["Full Text Search"], label="find exact text in documents")
-                doc_choices = gr.CheckboxGroup(["contracts", "legislations", "caselaw", "terms of service"], label="Search through these documents", visible=False)
+                text_match = gr.CheckboxGroup(
+                    ["Full Text Search"], label="find exact text in documents"
+                )
+
             with gr.Row():
-                lang_choices = gr.CheckboxGroup(["English", "French", "Italian", "Dutch", "Polish", "Hungarian", "Norwegian"], label="Filter results based on language")                
-                
+                lang_choices = gr.CheckboxGroup(
+                    [
+                        "English",
+                        "French",
+                        "Italian",
+                        "Dutch",
+                        "Polish",
+                        "Hungarian",
+                        "Norwegian",
+                    ],
+                    label="Filter results based on language",
+                )
+
             with gr.Row():
                 with gr.Column():
-                    user_query = gr.Text(label="Enter query here", placeholder="Search through all your documents")
-                    
-                    num_search_results = gr.Slider(1, max_search_results, visible=False, value=max_search_results, step=1, interactive=True, label="How many search results to show:")
-                                       
+                    user_query = gr.Text(
+                        label="Enter query here",
+                        placeholder="Search through all your documents",
+                    )
+
+                    num_search_results = gr.Slider(
+                        1,
+                        max_search_results,
+                        visible=False,
+                        value=max_search_results,
+                        step=1,
+                        interactive=True,
+                        label="How many search results to show:",
+                    )
+
                     with gr.Row():
                         with gr.Column():
                             query_match_out_1 = gr.Textbox(label=f"Search Result 1")
-                        
+
                         with gr.Column():
                             with gr.Accordion("Translate Search Result", open=False):
-                                translate_1 = gr.Button(label="Translate", value="Translate")
-                                translate_res_1 = gr.Textbox(label=f"Translation Result 1")
-                                
+                                translate_1 = gr.Button(
+                                    label="Translate", value="Translate"
+                                )
+                                translate_res_1 = gr.Textbox(
+                                    label=f"Translation Result 1"
+                                )
+
                     with gr.Row():
                         with gr.Column():
                             query_match_out_2 = gr.Textbox(label=f"Search Result 2")
 
                         with gr.Column():
                             with gr.Accordion("Translate Search Result", open=False):
-                                translate_2 = gr.Button(label="Translate", value="Translate")
-                                translate_res_2 = gr.Textbox(label=f"Translation Result 2")
-                                
-                    with gr.Row():        
+                                translate_2 = gr.Button(
+                                    label="Translate", value="Translate"
+                                )
+                                translate_res_2 = gr.Textbox(
+                                    label=f"Translation Result 2"
+                                )
+
+                    with gr.Row():
                         with gr.Column():
                             query_match_out_3 = gr.Textbox(label=f"Search Result 3")
 
                         with gr.Column():
                             with gr.Accordion("Translate Search Result", open=False):
-                                translate_3 = gr.Button(label="Translate", value="Translate")
-                                translate_res_3 = gr.Textbox(label=f"Translation Result 3")
-                
-    
+                                translate_3 = gr.Button(
+                                    label="Translate", value="Translate"
+                                )
+                                translate_res_3 = gr.Textbox(
+                                    label=f"Translation Result 3"
+                                )
+
     # fetch answer for submitted question corresponding to input document
     input_question.submit(
-        user, [input_question, chatbot], [input_question, chatbot], queue=False
+        get_user_input,
+        [input_question, chatbot],
+        [input_question, chatbot],
+        queue=False,
     ).then(legal_doc_qa_bot, [input_document, chatbot], chatbot)
 
     # reset the chatbot Q&A history when input document changes
     input_document.change(fn=reset_chatbot, inputs=[], outputs=chatbot)
-    
+
+    # Loading examples on click for Q&A module
     example_1.click(
         load_gpl_license,
         [],
         [input_document, input_question],
         queue=False,
     )
-    
+
     example_2.click(
         load_pokemon_license,
         [],
         [input_document, input_question],
         queue=False,
     )
-    
+
+    # Loading examples on click for Q&A module
     example_3.click(
         load_gpl_license,
         [],
         [summary_input, invisible_comp],
         queue=False,
     )
-    
+
     example_4.click(
         load_pokemon_license,
         [],
         [summary_input, invisible_comp],
         queue=False,
     )
-    
+
     # generate summary corresponding to document submitted by the user.
     generate_summary.click(
         summarize,
@@ -205,33 +237,42 @@ with gr.Blocks() as demo:
 
     # clear the chatbot Q&A history when this button is clicked by the user
     clear.click(lambda: None, None, chatbot, queue=False)
-    
+
     # run search as user is typing the query
-    user_query.change(cross_lingual_document_search, [user_query, num_search_results, lang_choices, doc_choices, text_match], [query_match_out_1, query_match_out_2, query_match_out_3], queue=False)
-    
+    user_query.change(
+        cross_lingual_document_search,
+        [user_query, num_search_results, lang_choices, text_match],
+        [query_match_out_1, query_match_out_2, query_match_out_3],
+        queue=False,
+    )
+
     # run search if user submits query
-    user_query.submit(cross_lingual_document_search, [user_query, num_search_results, lang_choices, doc_choices, text_match], [query_match_out_1, query_match_out_2, query_match_out_3], queue=False)
-    
-    
+    user_query.submit(
+        cross_lingual_document_search,
+        [user_query, num_search_results, lang_choices, text_match],
+        [query_match_out_1, query_match_out_2, query_match_out_3],
+        queue=False,
+    )
+
     # translate results corresponding to 1st search result obtained if user clicks 'Translate'
     translate_1.click(
-        translate_output,
+        translate_search_result,
         [query_match_out_1, user_query],
         [translate_res_1],
         queue=False,
     )
-    
+
     # translate results corresponding to 2nd search result obtained if user clicks 'Translate'
     translate_2.click(
-        translate_output,
+        translate_search_result,
         [query_match_out_2, user_query],
         [translate_res_2],
         queue=False,
     )
-    
+
     # translate results corresponding to 3rd search result obtained if user clicks 'Translate'
     translate_3.click(
-        translate_output,
+        translate_search_result,
         [query_match_out_3, user_query],
         [translate_res_3],
         queue=False,
