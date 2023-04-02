@@ -137,8 +137,6 @@ if __name__ == "__main__":
         api_key=QDRANT_API_KEY,
     )
 
-    qdrant_client.delete_collection(collection_name=CREATE_QDRANT_COLLECTION_NAME)
-
     # fetch the size of the embeddings depending on which model is being used to create embeddings for documents
     vector_size = get_embedding_size()
 

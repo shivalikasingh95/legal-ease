@@ -6,6 +6,7 @@ from app.legal_document_utils import (
     load_pokemon_license,
 )
 from app.document_search import cross_lingual_document_search, translate_search_result
+from app.theme import CustomTheme
 
 max_search_results = 3
 
@@ -24,7 +25,10 @@ def legal_doc_qa_bot(input_document, history):
     return history
 
 
-with gr.Blocks() as demo:
+custom_theme = CustomTheme()
+
+
+with gr.Blocks(theme=custom_theme) as demo:
     gr.HTML(
         """<html><center><img src='file/logo/flc_design4.png', alt='Legal-ease logo', width=250, height=250 /></center><br></html>"""
     )
@@ -47,12 +51,16 @@ with gr.Blocks() as demo:
                         label="Ask a question",
                         placeholder="Type a question here and hit enter.",
                     )
-                    clear = gr.Button("Clear")
+                    clear = gr.Button("Clear", variant="primary")
 
             with gr.Row():
                 with gr.Accordion("Show example inputs I can load:", open=False):
-                    example_1 = gr.Button("Load GPL License Document")
-                    example_2 = gr.Button("Load Pokemon Go Terms of Service")
+                    example_1 = gr.Button(
+                        "Load GPL License Document", variant="primary"
+                    )
+                    example_2 = gr.Button(
+                        "Load Pokemon Go Terms of Service", variant="primary"
+                    )
 
         with gr.TabItem("Summarize"):
             gr.HTML(
@@ -62,7 +70,7 @@ with gr.Blocks() as demo:
             with gr.Row():
                 with gr.Column():
                     summary_input = gr.Text(label="Document", lines=10)
-                    generate_summary = gr.Button("Generate Summary")
+                    generate_summary = gr.Button("Generate Summary", variant="primary")
 
                 with gr.Column():
                     summary_output = gr.Text(label="Summary", lines=10)
@@ -100,8 +108,12 @@ with gr.Blocks() as demo:
 
             with gr.Row():
                 with gr.Accordion("Show example inputs I can load:", open=False):
-                    example_3 = gr.Button("Load GPL License Document")
-                    example_4 = gr.Button("Load Pokemon Go Terms of Service")
+                    example_3 = gr.Button(
+                        "Load GPL License Document", variant="primary"
+                    )
+                    example_4 = gr.Button(
+                        "Load Pokemon Go Terms of Service", variant="primary"
+                    )
 
         with gr.TabItem("Document Search"):
             gr.HTML(
@@ -154,7 +166,9 @@ with gr.Blocks() as demo:
                         with gr.Column():
                             with gr.Accordion("Translate Search Result", open=False):
                                 translate_1 = gr.Button(
-                                    label="Translate", value="Translate"
+                                    label="Translate",
+                                    value="Translate",
+                                    variant="primary",
                                 )
                                 translate_res_1 = gr.Textbox(
                                     label=f"Translation Result 1"
@@ -167,7 +181,9 @@ with gr.Blocks() as demo:
                         with gr.Column():
                             with gr.Accordion("Translate Search Result", open=False):
                                 translate_2 = gr.Button(
-                                    label="Translate", value="Translate"
+                                    label="Translate",
+                                    value="Translate",
+                                    variant="primary",
                                 )
                                 translate_res_2 = gr.Textbox(
                                     label=f"Translation Result 2"
@@ -180,7 +196,9 @@ with gr.Blocks() as demo:
                         with gr.Column():
                             with gr.Accordion("Translate Search Result", open=False):
                                 translate_3 = gr.Button(
-                                    label="Translate", value="Translate"
+                                    label="Translate",
+                                    value="Translate",
+                                    variant="primary",
                                 )
                                 translate_res_3 = gr.Textbox(
                                     label=f"Translation Result 3"
